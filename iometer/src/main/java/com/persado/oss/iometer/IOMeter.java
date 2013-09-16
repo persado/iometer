@@ -55,7 +55,7 @@ public class IOMeter {
 		}
 		
 		availablePoints = (int) (fileSize/bufferSize) - 2;
-		seeksToTry = Math.max(1000, availablePoints/1000);
+		seeksToTry = Math.max(5000, availablePoints/1000);
 		log("Will create temporary files of "+threads* fileSizeMB +"MB. ");
 		log("WARNING: If your machine has more memory than this, the test may be invalid.");
 		log("Out of "+availablePoints+" slots, will try "+seeksToTry+" in the generated files.");
