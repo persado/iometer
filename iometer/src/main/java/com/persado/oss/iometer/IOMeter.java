@@ -290,17 +290,18 @@ public class IOMeter {
 			try {
 				byte[] tempBuff = new byte[bufferSize];
 				raf = new RandomAccessFile(toTest,"rw");
-				
+				long seekPoint = 0;
 				for (int i = 0; i < seeksToTry; i++) {
-					long seekPoint = ((long) ( random.nextDouble() * availablePoints) * bufferSize);
+					seekPoint = ((long) ( random.nextDouble() * availablePoints) * bufferSize);
 					raf.seek(seekPoint);
 					raf.read(tempBuff);
+					seekPoint = ((long) ( random.nextDouble() * availablePoints) * bufferSize);
 					raf.seek(seekPoint);
 					raf.write(dataBlock);
 					addIOP("ReadWrite Random");
 				}
 			} catch (IOException e) {
-				log("FAILED TO DO RANDOM TEST");
+				log("FAILED TO DO RANDOM RW TEST");
 				e.printStackTrace();
 			} finally {
 				if (raf!=null) {
