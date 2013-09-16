@@ -244,6 +244,8 @@ public class IOMeter {
 				doSequentialReadTest(toTest);
 				log("Starting random read test");
 				doRandomReadTest(toTest);
+				log("Starting random read-write test");
+				doRandomReadWriteTest(toTest);
 				log("worker done.");
 			}
 		}
@@ -277,7 +279,43 @@ public class IOMeter {
 			
 			long end = System.currentTimeMillis();
 			
-			calcMBsec("READRANDOM", start, end, 1000*bufferSize);
+			calcMBsec("READRANDOM", start, end, seeksToTry*bufferSize);
+
+		}
+		
+		
+		private void doRandomReadWriteTest(File toTest) {
+			RandomAccessFile raf = null;
+			long start = System.currentTimeMillis();
+			try {
+				byte[] tempBuff = new byte[bufferSize];
+				raf = new RandomAccessFile(toTest,"rw");
+				
+				for (int i = 0; i < seeksToTry; i++) {
+					long seekPoint = ((long) ( random.nextDouble() * availablePoints) * bufferSize);
+					raf.seek(seekPoint);
+					raf.read(tempBuff);
+					raf.seek(seekPoint);
+					raf.write(dataBlock);
+					addIOP("ReadWrite Random");
+				}
+			} catch (IOException e) {
+				log("FAILED TO DO RANDOM TEST");
+				e.printStackTrace();
+			} finally {
+				if (raf!=null) {
+					try {
+						raf.close();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
+			
+			long end = System.currentTimeMillis();
+			
+			calcMBsec("READWRITERANDOM", start, end, seeksToTry*bufferSize);
 
 		}
 
