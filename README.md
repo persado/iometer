@@ -8,7 +8,7 @@ IOMeter understands the following parameters:
  * --filesize=<..> the amount of MB to generate for each reader/writer, default is 2GB. 
  * --buffersize=<..> the amount (in bytes) for the data to use, default is 4096 bytes (1 page).
 
-Note: the total filesize used (shown when the application is running) should exceed the amount of RAM on the machine tested by _at least 40%_ otherwise the result will not be accurate. 
+Note: the total filesize used (shown when the application is running) should exceed the amount of RAM on the machine tested by _at least twice_ otherwise the result will not be accurate. 
 Examples for correct usage: 
  * Machine with 4 CPU-cores and 8GB RAM (e.g. MacBook Pro 2011, 8GB RAM) use: --filesize=2048 (16GB test files)
  * Machine with 8 CPU-cores and 16GB RAM (e.g. MacBook Pro Retina 16GB) use: --filesize=4096 (64GB test files)
@@ -73,7 +73,7 @@ java -cp target/iometer-0.10.0-SNAPSHOT.jar  com.persado.oss.iometer.IOMeter
 </pre>
 Situation here is largely different: linear reads at 36.9MB/s, writes at 41MB/s, random reads at 0.4MB/s and random read-writes at 0.55MB/s.
 
-Your own results may differ - do note that you should be using files that total at least 40% more than available memory. 
+Your own results may differ - _note that you should be using files that total at least 70-80% more than available memory._
 
 
 
