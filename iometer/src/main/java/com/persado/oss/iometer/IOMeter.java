@@ -55,7 +55,7 @@ public class IOMeter {
 		}
 		
 		availablePoints = (int) (fileSize/bufferSize) - 2;
-		seeksToTry = Math.max(5000, availablePoints/500);
+		seeksToTry = Math.max(10000, availablePoints/100);
 		log("Will create temporary files of "+threads* fileSizeMB +"MB. ");
 		log("WARNING: If your machine has more memory than this, the test may be invalid.");
 		log("Out of "+availablePoints+" slots, will try "+seeksToTry+" in the generated files.");
@@ -293,9 +293,11 @@ public class IOMeter {
 				long seekPoint = 0;
 				for (int i = 0; i < seeksToTry; i++) {
 					seekPoint = ((long) ( random.nextDouble() * availablePoints) * bufferSize);
+					//log("seekpoint:"+seekPoint);
 					raf.seek(seekPoint);
 					raf.read(tempBuff);
 					seekPoint = ((long) ( random.nextDouble() * availablePoints) * bufferSize);
+					//log("seekpoint:"+seekPoint);
 					raf.seek(seekPoint);
 					raf.write(dataBlock);
 					addIOP("ReadWrite Random");
@@ -316,7 +318,7 @@ public class IOMeter {
 			
 			long end = System.currentTimeMillis();
 			
-			calcMBsec("READWRITERANDOM", start, end, seeksToTry*bufferSize);
+			calcMBsec("READWRITERANDOM", start, end, seeksToTry*bufferSize*2);
 
 		}
 
