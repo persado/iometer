@@ -75,7 +75,8 @@ Situation here is largely different: linear reads at 36.9MB/s, writes at 41MB/s,
 
 Your own results may differ - _note that you should be using files that total at least 70-80% more than available memory._
 
-
+###Comparing Hard disks to SSD
+In the examples above, you can see that the random read result shows 101.1 I/O operations per second for the hard disk on the MacbookPro laptop. The SSD laptop does 40956 I/O operations per second _on average_; this is a great order of magnitude faster.
 
 
 
