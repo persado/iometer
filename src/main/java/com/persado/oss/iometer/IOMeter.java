@@ -4,10 +4,11 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -74,23 +75,49 @@ public class IOMeter {
 	}
 
 	public static void main(String[] args) {
-		log("IOMeter --threads=N --filesize=Y (MB) --buffersize=Z (bytes)");
+		log("IOMeter --threads=N --filesize=Y (MB) --buffersize=Z (bytes) --allocateMem=W (GB to try and allocate)");
 		IOMeter meter = null;
 		int threads = DEFAULT_THREADS;
 		long filesize = DEFAULT_FILESIZE;
 		int buffersize = DEFAULT_BUFSIZE;
+		long allocateMem = 0;
 		
 		if (args.length > 0) {
 			threads = parseArgument("--threads", args, threads);
 			buffersize = parseArgument("--buffersize", args, buffersize);
 			filesize = (parseArgument("--filesize", args, filesize)*1024)*1024;
+			allocateMem = (parseArgument("--allocateMem", args, allocateMem)*1024)*1024*1024;
+		}
+
+		List<Buffer> b = new ArrayList<Buffer>();
+		
+		if (allocateMem >= Integer.MAX_VALUE) {
+			log("can only allocate 2G at a time, trying in a loop");
+			long allocated = 0;
+			while (allocated < allocateMem - 1024) {
+				int i = Integer.MAX_VALUE/2;
+				try {
+					b.add( ByteBuffer.allocateDirect( i ) );
+				} catch (java.lang.OutOfMemoryError oe) {
+					log("Cannot allocate "+allocateMem+" memory, use -XX:MaxDirectMemorySize to allocate more to this VM");
+					System.exit(222);
+				}
+				allocated += i;
+
+				log("Allocated "+allocated+" out of "+allocateMem);
+			}
+			
+		} else {
+			b.add( ByteBuffer.allocateDirect((int)allocateMem) );
 		}
 		
 		meter = new IOMeter(threads, filesize,
 					buffersize);
 		
 		meter.doBenchmark();
-
+		if (b.size() > 0 ) {
+			b.clear();
+		}
 	}
 
 	private static <T> T parseArgument(String argumentName, String[] args, T defaultValue) {
