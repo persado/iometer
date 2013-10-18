@@ -16,8 +16,8 @@
 			<organization>Persado</organization>
 		</contributor>
 	</contributors>
-	
-	
+
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -43,6 +43,19 @@
 					<target>1.6</target>
 					<memmax>2048m</memmax>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<addClasspath>true</addClasspath>
+							<mainClass>com.persado.oss.iometer.IOMeter</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+
 			</plugin>
 		</plugins>
 
