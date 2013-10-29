@@ -102,7 +102,7 @@ java -jar iometer-0.10.0-SNAPSHOT.jar --filesize=4096
 131018-14:35:198 [Statistics]  * IOPS (ReadWrite Random): min : 99, max: 1025422, average: 261263.14503816795
 131018-14:35:198 [Statistics]  * IOPS (Write): min : 99, max: 1025422, average: 265803.5450980392
 ```
-####Test with readahead 16 sectors, two volumes (2 x SSD, RAID 0):
+#####Test with readahead 16 sectors, two volumes (2 x SSD, RAID 0):
 java -jar iometer-0.10.0-SNAPSHOT.jar --filesize=4096
 ```
 131018-14:58:869 [Statistics]  * READRANDOM 559.74609375 MB/sec
