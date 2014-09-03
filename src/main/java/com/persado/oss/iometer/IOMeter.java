@@ -37,8 +37,8 @@ public class IOMeter {
 	private int bufferSize;
 	private byte[] dataBlock;
 	
-	private int availablePoints;
-	private int seeksToTry;
+	private long availablePoints;
+	private long seeksToTry;
 
 	private Random random = new Random( System.nanoTime() );
 	
@@ -55,8 +55,10 @@ public class IOMeter {
 			dataBlock[i] =  (byte) (Math.random()*255.0);
 		}
 		
-		availablePoints = (int) (fileSize/bufferSize) - 2;
-		seeksToTry = Math.max(10000, availablePoints/100);
+		availablePoints = (long) (fileSize/bufferSize) - 2;
+		while (seeksToTry < (availablePoints/4)) {
+			seeksToTry = Math.max(10000, (1 + seeksToTry) * 2);
+		}
 		log("Will create temporary files of "+threads* fileSizeMB +"MB. ");
 		log("WARNING: If your machine has more memory than this, the test may be invalid.");
 		log("Out of "+availablePoints+" slots, will try "+seeksToTry+" in the generated files.");
@@ -80,44 +82,20 @@ public class IOMeter {
 		int threads = DEFAULT_THREADS;
 		long filesize = DEFAULT_FILESIZE;
 		int buffersize = DEFAULT_BUFSIZE;
-		long allocateMem = 0;
 		
 		if (args.length > 0) {
 			threads = parseArgument("--threads", args, threads);
 			buffersize = parseArgument("--buffersize", args, buffersize);
 			filesize = (parseArgument("--filesize", args, filesize)*1024)*1024;
-			allocateMem = (parseArgument("--allocateMem", args, allocateMem)*1024)*1024*1024;
 		}
 
-		List<Buffer> b = new ArrayList<Buffer>();
 		
-		if (allocateMem >= Integer.MAX_VALUE) {
-			log("can only allocate 2G at a time, trying in a loop");
-			long allocated = 0;
-			while (allocated < allocateMem - 1024) {
-				int i = Integer.MAX_VALUE/2;
-				try {
-					b.add( ByteBuffer.allocateDirect( i ) );
-				} catch (java.lang.OutOfMemoryError oe) {
-					log("Cannot allocate "+allocateMem+" memory, use -XX:MaxDirectMemorySize to allocate more to this VM");
-					System.exit(222);
-				}
-				allocated += i;
-
-				log("Allocated "+allocated+" out of "+allocateMem);
-			}
-			
-		} else {
-			b.add( ByteBuffer.allocateDirect((int)allocateMem) );
-		}
 		
 		meter = new IOMeter(threads, filesize,
 					buffersize);
 		
 		meter.doBenchmark();
-		if (b.size() > 0 ) {
-			b.clear();
-		}
+		
 	}
 
 	private static <T> T parseArgument(String argumentName, String[] args, T defaultValue) {
@@ -139,7 +117,7 @@ public class IOMeter {
 	}
 
 	private void doBenchmark() {
-		CyclicBarrier fileCreationBarrier = new CyclicBarrier(threads); // threads
+		CyclicBarrier fileCreationBarrier = new CyclicBarrier(threads + 1); // threads
 																		// all
 																		// create
 																		// files
@@ -157,6 +135,18 @@ public class IOMeter {
 			pool.execute(new IOThread(fileCreationBarrier, ioTestBarrier));
 		}
 
+		try {
+			fileCreationBarrier.await();
+			log("All threads have finished writing files, waiting 1 minute for I/O to complete");
+			Thread.sleep(60000);
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (BrokenBarrierException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
 				this.setName("Statistics");
@@ -239,6 +229,7 @@ public class IOMeter {
 			try {
 				createFileForTest();
 				fileBarrier.await();
+				Thread.sleep(60000);
 			} catch (InterruptedException e) {
 				log(e.getMessage());
 				e.printStackTrace();
@@ -284,7 +275,7 @@ public class IOMeter {
 				byte[] tempBuff = new byte[bufferSize];
 				raf = new RandomAccessFile(toTest,"r");
 				
-				for (int i = 0; i < seeksToTry; i++) {
+				for (int i = 0; i < seeksToTry*2; i++) {
 					long seekPoint = ((long) ( random.nextDouble() * availablePoints) * bufferSize);
 					raf.seek(seekPoint);
 					raf.read(tempBuff);
@@ -318,7 +309,7 @@ public class IOMeter {
 				byte[] tempBuff = new byte[bufferSize];
 				raf = new RandomAccessFile(toTest,"rw");
 				long seekPoint = 0;
-				for (int i = 0; i < seeksToTry; i++) {
+				for (int i = 0; i < seeksToTry*2; i++) {
 					seekPoint = ((long) ( random.nextDouble() * availablePoints) * bufferSize);
 					//log("seekpoint:"+seekPoint);
 					raf.seek(seekPoint);
@@ -328,6 +319,10 @@ public class IOMeter {
 					raf.seek(seekPoint);
 					raf.write(dataBlock);
 					addIOP("ReadWrite Random");
+					if (i % 10000 == 0) {
+						int pct = (int)((i*1.0/(seeksToTry*2))*100);
+						log("Completed "+ pct+"%");
+					}
 				}
 			} catch (IOException e) {
 				log("FAILED TO DO RANDOM RW TEST");
